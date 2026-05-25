@@ -3,6 +3,8 @@ from rest_framework import generics,status
 from rest_framework.response import Response
 from .models import Cart,CartItem
 from .serializers import CartSerializer,CartItemSerializer
+from product.models import ProductVariant
+
 class CartView(APIView):
     def get(self,request):
         key = request.session.session_key
@@ -31,6 +33,8 @@ class CartView(APIView):
         return Response({"message":"Item added to cart"},status=status.HTTP_201_CREATED)
 class CartItemDeleteView(generics.DestroyAPIView):
     queryset=CartItem.objects.all()
+    serializer_class=CartItemSerializer
+    lookup_field='id'
     def get_queryset(self):
         key=self.request.session.session_key
         return CartItem.objects.filter(cart__session_key=key)
