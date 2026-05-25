@@ -3,6 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Order,OrderItem
 from cart.models import Cart,CartItem
+from product.models import ProductVariant
 from rest_framework.permissions import IsAdminUser
 from rest_framework import status
 from .serializers import OrderSerializer,OrderItemSerializer
@@ -25,16 +26,22 @@ class OrderView(APIView):
         number=request.data.get('user_number')
         if not fullname or not number or not email:
             return Response({"error":"fullname, email and number is required"},status=status.HTTP_400_BAD_REQUEST)
-        cart_items=cart.items.all()
+        cart_items=cart.items.select_related('product_variant__product')
         total_price = 0
-        for item in cart_items:
-            total_price+=item.product_variant.product.price*item.quantity
         with transaction.atomic():
-            order=Order.objects.create(user_fullname=fullname,user_email=email,user_number=number,total_price=total_price)
+            order=Order.objects.create(user_fullname=fullname,user_email=email,user_number=number)
             order_items = []
             for item in cart_items:
-                order_items.append(OrderItem(order=order,product_variant=item.product_variant,quantity=item.quantity))
+                variant=ProductVariant.objects.select_for_update().get(id=item.product_variant_id)
+                if variant.quantity<item.quantity:
+                    return Response({"error":"product out of stock"},status=status.HTTP_400_BAD_REQUEST)
+                variant.quantity-=item.quantity
+                variant.save()
+                total_price += variant.product.price * item.quantity
+                order_items.append(OrderItem(order=order,product_variant=variant,quantity=item.quantity))
             OrderItem.objects.bulk_create(order_items)
+            order.total_price=total_price
+            order.save()
             cart.delete()
         return Response({"message":"Order created"},status=status.HTTP_201_CREATED)
             
