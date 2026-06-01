@@ -11,11 +11,22 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+import os
+import  environ
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+env = environ.Env()
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
+WAKILNI_ENV = env('WAKILNI_ENV')
+WAKILNI_KEY = env('WAKILNI_KEY')
+WAKILNI_SECRET = env('WAKILNI_SECRET')
+if WAKILNI_ENV == 'testing':
+    WAKILNI_BASE_URL = 'https://api-dev.wakilni.com'
+else:
+    WAKILNI_BASE_URL = 'https://api-prod.wakilni.com'
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
