@@ -39,17 +39,12 @@ class CheckOutView(APIView):
             order_items = []
             for item in cart_items:
                 variant = ProductVariant.objects.select_for_update().get(id=item.product_variant_id)
-                
-                # Note: your model uses variant.quantity for stock tracking
                 if variant.quantity < item.quantity:
                     return Response({"error": f"Product {variant.product.name} is out of stock"}, status=status.HTTP_400_BAD_REQUEST)
-                
                 variant.quantity -= item.quantity
                 variant.save()
-
                 total_price += variant.product.price * item.quantity
                 order_items.append(OrderItem(order=order, product_variant=variant, quantity=item.quantity))
-
             OrderItem.objects.bulk_create(order_items)
             order.total_price = total_price
             order.save()
@@ -57,7 +52,7 @@ class CheckOutView(APIView):
             if response and response.status_code in [200, 201]:
                 wakilni_data = response.json()
                 order.status = 'shipped'
-                order.barcode = wakilni_data.get('barcode')
+                order.barcode = wakilni_data.get('barcode_label')
                 order.save()
                 cart.delete()
                 return Response({"message": "Order created and synced with Wakilni!", "order_id": order.id}, status=status.HTTP_201_CREATED)

@@ -44,7 +44,7 @@ class CartItemDeleteView(generics.DestroyAPIView):
     def get_queryset(self):
         key=self.request.session.session_key
         return CartItem.objects.filter(cart__session_key=key)
-class CartItemUpdateView(generics.UpdateAPIView): # or generics.RetrieveUpdateDestroyAPIView
+class CartItemUpdateView(generics.UpdateAPIView):
     queryset = CartItem.objects.all()
     serializer_class = CartItemSerializer
     lookup_field = 'id'
