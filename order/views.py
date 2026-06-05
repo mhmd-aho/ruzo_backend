@@ -6,6 +6,7 @@ from .models import Order, OrderItem, RecieverAddress
 from cart.models import Cart
 from product.models import ProductVariant
 from .shipping import create_wakilni_order
+from rest_framework.permissions import IsAdminUser
 # Create your views here.
 
 class CheckOutView(APIView):
@@ -48,35 +49,53 @@ class CheckOutView(APIView):
             OrderItem.objects.bulk_create(order_items)
             order.total_price = total_price
             order.save()
-            response = create_wakilni_order(order)
-            if response and response.status_code in [200, 201]:
-                wakilni_data = response.json()
-                order.status = 'shipped'
-                order.barcode = wakilni_data.get('barcode_label')
-                order.save()
-                cart.delete()
-                return Response({"message": "Order created and synced with Wakilni!", "order_id": order.id}, status=status.HTTP_201_CREATED)
-            else:
-                order.status = 'failed_to_ship'
-                order.save()
-                cart.delete()
+        response = create_wakilni_order(order)
+        if response and response.status_code in [200, 201]:
+            wakilni_data = response.json()
+            order.status = 'shipped'
+            order.barcode = wakilni_data.get('barcode_label')
+            order.wakilni_id = wakilni_data.get('delivery_id')
+            order.save()
+            cart.delete()
+            return Response({"message": "Order created and synced with Wakilni!", "order_id": order.id}, status=status.HTTP_201_CREATED)
+        else:
+            with transaction.atomic():
+                for item in order.items.all():
+                    variant = ProductVariant.objects.select_for_update().get(id=item.product_variant.id)
+                    variant.quantity += item.quantity
+                    variant.save()
+                order.delete()
                 return Response({
-                    "message": "Order saved locally, but failed to sync with Wakilni routing nodes.", 
-                    "order_id": order.id
-                }, status=status.HTTP_201_CREATED)
-class OrderView(APIView):
-    def get_permissions(self):
-        if self.request.method=='GET' or self.request.method=='DELETE':
-            return [IsAdminUser()]
-        return []
+                    "message": "Order failed to sync with Wakilni routing nodes.", 
+                }, status=status.HTTP_502_BAD_GATEWAY)
+class OrdersView(APIView):
+    permission_classes=[IsAdminUser()]
     def get(self,request):
         orders=Order.objects.all().order_by('-created_at')
         serializer=OrderSerializer(orders,many=True)
         return Response(serializer.data,status=status.HTTP_200_OK)
-    def delete(self,request,id):
+class OrderView(APIView):
+    permission_classes=[IsAdminUser()]
+    def get(self,request,id):
         try:
             order = Order.objects.get(id=id)
-            order.delete()
-            return Response({"message":"order deleted"},status=status.HTTP_204_NO_CONTENT)
+            serializer=OrderSerializer(order)
+            return Response(serializer.data,status=status.HTTP_200_OK)
+        except Order.DoesNotExist:
+            return Response({"error":"order not found"},status=status.HTTP_404_NOT_FOUND)
+    def delete(self,request,id):
+        reason=request.data.get('reason')
+        if not reason:
+            return Response({"error":"reason is required"},status=status.HTTP_400_BAD_REQUEST)
+        try:
+            order = Order.objects.get(id=id)
+            response = cancel_wakilni_order(order.wakilni_id,reason)
+            if response and response.status_code in [200, 201]:
+                order.delete()
+                return Response({"message":"order deleted"},status=status.HTTP_204_NO_CONTENT)
+            else:
+                return Response({
+                    "message": "Failed to cancel order in Wakilni", 
+                }, status=status.HTTP_502_BAD_GATEWAY)
         except Order.DoesNotExist:
             return Response({"error":"order not found"},status=status.HTTP_404_NOT_FOUND)

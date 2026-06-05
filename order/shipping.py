@@ -47,8 +47,6 @@ def create_wakilni_order(order):
         }
         headers = {
             'Authorization': f'Bearer {token}',
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
         }
         
         start_bulk = f"{settings.WAKILNI_BASE_URL}/api/v2/clients/start_bulk"
@@ -58,7 +56,7 @@ def create_wakilni_order(order):
         body = {
             "get_order_details": False,
             "get_barcode": True,
-            "waybill": order.id,
+            "waybill": str(order.id),
             "receiver_id": clean_receiver_id,
             "receiver_first_name": address.receiver_first_name,
             "receiver_last_name": address.receiver_last_name,
@@ -94,3 +92,19 @@ def create_wakilni_order(order):
         if hasattr(e, "response") and e.response is not None:
             print(f"Response data: {e.response.text}")
         return getattr(e, "response", None)
+def cancel_wakilni_order(order_id,reason):
+    try:
+        token = get_wakilni_token()
+    except Exception as e:
+        print(f"Request failed during authentication: {e}")
+        return None
+    headers = {
+        'Authorization': f'Bearer {token}',
+    }
+    body={
+        "reason": reason
+    }
+    url = f"{settings.WAKILNI_BASE_URL}/api/v2/clients/orders/{order_id}/cancel"
+    response = requests.post(url, json=body, headers=headers, timeout=10)
+    response.raise_for_status()
+    return response
