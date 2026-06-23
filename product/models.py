@@ -14,6 +14,7 @@ class Size(models.Model):
         return self.name
 class Color(models.Model):
     name=models.CharField(max_length=100)
+    color_code=models.CharField(max_length=7,unique=True)
     def __str__(self):
         return self.name
 class Product(models.Model):

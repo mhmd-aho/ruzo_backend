@@ -17,6 +17,11 @@ class ProductsListView(generics.ListAPIView):
         if category_id:
             queryset=queryset.filter(category_id=category_id)
         return queryset
+class ProductRetrieveView(generics.RetrieveAPIView):
+    def get_queryset(self):
+        return Product.objects.get(id=self.kwargs['id'])
+    serializer_class=ProductSerializer
+    lookup_field='id'
 class ProductCreateView(generics.CreateAPIView):
     permission_classes=[IsAdminUser]
     queryset=Product.objects.all()
@@ -68,6 +73,10 @@ class SizeModifyView(generics.RetrieveUpdateDestroyAPIView):
     lookup_field='id'
 class MediaListView(generics.ListAPIView):
     queryset=Media.objects.all()
+    serializer_class=MediaSerializer
+class ProductMediaListView(generics.ListAPIView):
+    def get_queryset(self):
+        return Media.objects.filter(product=self.kwargs['product_id'])
     serializer_class=MediaSerializer
 class MediaCreateView(generics.CreateAPIView):
     permission_classes=[IsAdminUser]

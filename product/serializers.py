@@ -13,14 +13,14 @@ class SizeSerializer(serializers.ModelSerializer):
         model=Size
         fields='__all__'
 class ProductSerializer(serializers.ModelSerializer):
-    category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
+    category = CategorySerializer(read_only=True)
     class Meta:
         model=Product
         fields=['id','name','description','price','category','sale','best_seller']
 class ProductVariantSerializer(serializers.ModelSerializer):
     product=serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
-    size=serializers.PrimaryKeyRelatedField(queryset=Size.objects.all())
-    color=serializers.PrimaryKeyRelatedField(queryset=Color.objects.all())
+    size=SizeSerializer(read_only=True)
+    color= ColorSerializer(read_only=True)
     class Meta:
         model=ProductVariant
         fields=['id','product','size','color','quantity']
