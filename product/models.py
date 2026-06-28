@@ -19,7 +19,7 @@ class Color(models.Model):
         return self.name
 class Product(models.Model):
     name = models.CharField(max_length=255)
-    description = models.TextField(blank=True)
+    description = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
     category=models.ForeignKey('Category', on_delete=models.PROTECT,related_name='products')
     sale = models.PositiveIntegerField(validators=[MinValueValidator(0),MaxValueValidator(100)],default=0)
@@ -38,8 +38,8 @@ class ProductVariant(models.Model):
     def __str__(self):
         return f"{self.product.name} {self.size.name} {self.color.name}"
 class Media(models.Model):
-    product=models.ForeignKey(Product, on_delete=models.CASCADE,related_name='images')
+    product_variant=models.ForeignKey(ProductVariant, on_delete=models.CASCADE,related_name='images',blank=True,null=True,default=1)
     media_url=models.CharField(max_length=255)
     def __str__(self):
-        return f"{self.product.name} Image"
+        return f"{self.product_variant.product.name} {self.product_variant.size.name} {self.product_variant.color.name} Image"
     

@@ -25,7 +25,7 @@ class ProductVariantSerializer(serializers.ModelSerializer):
         model=ProductVariant
         fields=['id','product','size','color','quantity']
 class MediaSerializer(serializers.ModelSerializer):
-    product= serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
+    product_variant=ProductVariantSerializer(read_only=True)
     class Meta:
         model=Media
-        fields=['id','product','media_url']
+        fields=['id','product_variant','media_url']

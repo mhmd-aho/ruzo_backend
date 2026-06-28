@@ -17,6 +17,6 @@ urlpatterns=[
     path('sizes/<int:id>/',SizeModifyView.as_view()),
     path('media/',MediaListView.as_view()),
     path('media/create/',MediaCreateView.as_view()),
-    path('<int:product_id>/media/',ProductMediaListView.as_view()),
+    path('<int:product_variant_id>/media/',ProductMediaListView.as_view()),
     path('media/<int:id>/',MediaModifyView.as_view()),
 ]

@@ -18,8 +18,7 @@ class ProductsListView(generics.ListAPIView):
             queryset=queryset.filter(category_id=category_id)
         return queryset
 class ProductRetrieveView(generics.RetrieveAPIView):
-    def get_queryset(self):
-        return Product.objects.get(id=self.kwargs['id'])
+    queryset =Product.objects.all()
     serializer_class=ProductSerializer
     lookup_field='id'
 class ProductCreateView(generics.CreateAPIView):
@@ -32,9 +31,23 @@ class ProductModifyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class=ProductSerializer
     lookup_field='id'
 class ProductVariantListView(generics.ListAPIView):
+    serializer_class = ProductVariantSerializer
+
     def get_queryset(self):
-        return ProductVariant.objects.filter(product=self.kwargs['product_id'])
-    serializer_class=ProductVariantSerializer
+        product_id = self.kwargs.get('product_id')
+        color = self.request.query_params.get('color')
+        size = self.request.query_params.get('size')
+        filters = {}
+        if product_id:
+            filters['product_id'] = product_id
+            
+        if color:
+            filters['color__name'] = color
+            
+        if size:
+            filters['size__name'] = size
+
+        return ProductVariant.objects.filter(**filters)
 class CategoryListView(generics.ListAPIView):
     queryset=Category.objects.all()
     serializer_class=CategorySerializer
@@ -76,7 +89,7 @@ class MediaListView(generics.ListAPIView):
     serializer_class=MediaSerializer
 class ProductMediaListView(generics.ListAPIView):
     def get_queryset(self):
-        return Media.objects.filter(product=self.kwargs['product_id'])
+        return Media.objects.filter(product_variant=self.kwargs['product_variant_id'])
     serializer_class=MediaSerializer
 class MediaCreateView(generics.CreateAPIView):
     permission_classes=[IsAdminUser]
