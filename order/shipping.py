@@ -13,7 +13,7 @@ def get_wakilni_token():
         "Content-Type": "application/json",
         "Accept": "application/json"
     }
-    response = requests.get(url, json=body, headers=headers, timeout=10)
+    response = requests.get(url, params=body, headers=headers, timeout=10)
     response.raise_for_status()
     return response.json().get('token')
 def create_wakilni_order(order):
@@ -65,8 +65,8 @@ def create_wakilni_order(order):
             "receiver_email": address.receiver_email,
             "receiver_secondary_phone_number": clean_secondary_phone_number,
             "receiver_location_id": address.id,
-            "receiver_longitude": float(address.receiver_longitude),
-            "receiver_latitude": float(address.receiver_latitude),
+            "receiver_longitude": None,
+            "receiver_latitude": None,
             "receiver_building": address.receiver_building,
             "receiver_floor": int(address.receiver_floor),
             "receiver_directions": address.receiver_directions,
@@ -108,3 +108,17 @@ def cancel_wakilni_order(order_id,reason):
     response = requests.post(url, json=body, headers=headers, timeout=10)
     response.raise_for_status()
     return response
+def get_wakilni_areas():
+    token = get_wakilni_token()
+    if not token:
+        raise ValueError("Could not retrieve a valid token from Wakilni.")
+    headers = {
+        'Authorization': f'Bearer {token}'
+    }
+    url = f"{settings.WAKILNI_BASE_URL}/api/v2/areas?with_filter=false&with_pagination=false"
+    response = requests.get(url, headers=headers, timeout=10)
+    if response.status_code != 200:
+        print(f"Status Code: {response.status_code}")
+        print(f"Response: {response.text}")
+    response.raise_for_status()
+    return response.json()

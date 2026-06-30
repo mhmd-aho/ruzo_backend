@@ -8,8 +8,6 @@ class RecieverAddress(models.Model):
     receiver_gender=models.IntegerField(choices=[(1,'Male'),(2,'Female')])
     receiver_email=models.EmailField()
     receiver_secondary_phone_number=models.CharField(max_length=15)
-    receiver_longitude=models.DecimalField(max_digits=9,decimal_places=6)
-    receiver_latitude=models.DecimalField(max_digits=9,decimal_places=6)
     receiver_building=models.CharField(max_length=100)
     receiver_floor=models.IntegerField()
     receiver_directions=models.TextField()

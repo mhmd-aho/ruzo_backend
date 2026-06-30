@@ -18,7 +18,7 @@ class ProductSerializer(serializers.ModelSerializer):
         model=Product
         fields=['id','name','description','price','category','sale','best_seller']
 class ProductVariantSerializer(serializers.ModelSerializer):
-    product=serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
+    product=ProductSerializer(read_only=True)
     size=SizeSerializer(read_only=True)
     color= ColorSerializer(read_only=True)
     class Meta:

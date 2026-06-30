@@ -5,8 +5,9 @@ from django.db import transaction
 from .models import Order, OrderItem, RecieverAddress
 from cart.models import Cart
 from product.models import ProductVariant
-from .shipping import create_wakilni_order
+from .shipping import create_wakilni_order,get_wakilni_areas
 from rest_framework.permissions import IsAdminUser
+from rest_framework.decorators import api_view
 # Create your views here.
 
 class CheckOutView(APIView):
@@ -29,8 +30,6 @@ class CheckOutView(APIView):
                 receiver_gender=request.data.get('receiver_gender'),
                 receiver_email=request.data.get('receiver_email'),
                 receiver_secondary_phone_number=request.data.get('receiver_secondary_phone_number'),
-                receiver_longitude=request.data.get('receiver_longitude'),
-                receiver_latitude=request.data.get('receiver_latitude'),
                 receiver_building=request.data.get('receiver_building'),
                 receiver_floor=request.data.get('receiver_floor'),
                 receiver_directions=request.data.get('receiver_directions'),
@@ -99,3 +98,13 @@ class OrderView(APIView):
                 }, status=status.HTTP_502_BAD_GATEWAY)
         except Order.DoesNotExist:
             return Response({"error":"order not found"},status=status.HTTP_404_NOT_FOUND)
+@api_view(['GET'])
+def getWakilniAreas(request):
+    try:
+        raw_data = get_wakilni_areas()
+        return Response(raw_data, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response(
+            {"error": "Failed to fetch Wakilni areas", "details": str(e)}, 
+            status=status.HTTP_502_BAD_GATEWAY
+        )

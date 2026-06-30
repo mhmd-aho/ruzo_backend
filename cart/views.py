@@ -37,18 +37,13 @@ class CartView(APIView):
         cart_item.quantity = target_quantity
         cart_item.save()
         return Response({"message":"Item added to cart"},status=status.HTTP_201_CREATED)
-class CartItemDeleteView(generics.DestroyAPIView):
+class CartItemView(generics.DestroyAPIView,generics.UpdateAPIView):
     queryset=CartItem.objects.all()
     serializer_class=CartItemSerializer
     lookup_field='id'
     def get_queryset(self):
         key=self.request.session.session_key
         return CartItem.objects.filter(cart__session_key=key)
-class CartItemUpdateView(generics.UpdateAPIView):
-    queryset = CartItem.objects.all()
-    serializer_class = CartItemSerializer
-    lookup_field = 'id'
-
     def update(self, request, *args, **kwargs):
         cart_item = self.get_object()
         action = request.query_params.get('action')
