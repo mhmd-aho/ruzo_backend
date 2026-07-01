@@ -13,9 +13,9 @@ class ProductsListView(generics.ListAPIView):
     pagination_class=ProductPagination
     def get_queryset(self):
         queryset=Product.objects.all()
-        category_id = self.request.query_params.get('category_id')
-        if category_id:
-            queryset=queryset.filter(category_id=category_id)
+        category = self.request.query_params.get('category')
+        if category:
+            queryset=queryset.filter(category__name=category)
         return queryset
 class ProductRetrieveView(generics.RetrieveAPIView):
     queryset =Product.objects.all()
